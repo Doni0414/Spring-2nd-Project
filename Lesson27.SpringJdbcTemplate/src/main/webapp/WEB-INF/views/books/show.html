@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book</title>
+</head>
+<body>
+<p th:text="${book.getTitle() + ', ' + book.getAuthor() + ', ' + book.getDate()}">VALUE</p>
+
+<div th:if="${person.getFio() == null}">
+    <p>This book is currently free</p>
+    <form th:method="POST" th:action="@{/books/{id}/order(id=${book.getId()})}">
+        <label for="person_id">Choose person</label>
+        <select th:object="${person}" th:field="*{id}" id="person_id">
+            <option th:each="currentPerson : ${people}" th:value="${currentPerson.getId()}" th:text="${currentPerson.getFio()}"></option>
+        </select>
+        <input type="submit" value="Order a book!">
+    </form>
+</div>
+
+<div th:if="${person.getFio() != null}">
+    <p style="color: red;" th:if="${book.isExpired()}" th:text="${'Currently at: ' + person.getFio()}"></p>
+    <p th:unless="${book.isExpired()}" th:text="${'Currently at: ' + person.getFio()}"></p>
+    <form th:method="POST" th:action="@{/books/{id}/makeFree(id=${book.getId()})}">
+        <input type="submit" value="Make Free!">
+    </form>
+</div>
+<a th:href="@{/books/{id}/edit(id=${book.getId()})}">Edit</a>
+
+<form th:method="POST" th:action="@{/books/{id}/delete(id=${book.getId()})}">
+  <input type="submit" value="Delete"/>
+</form>
+</body>
+</html>

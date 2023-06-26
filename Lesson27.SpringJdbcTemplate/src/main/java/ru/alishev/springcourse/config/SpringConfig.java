@@ -5,8 +5,16 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -15,6 +23,7 @@ import org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 
 import javax.sql.DataSource;
+import java.util.Properties;
 
 /**
  * @author Neil Alishev
@@ -22,13 +31,18 @@ import javax.sql.DataSource;
 @Configuration
 @ComponentScan("ru.alishev.springcourse")
 @EnableWebMvc
+@PropertySource("classpath:hibernate.properties")
+@EnableTransactionManagement
+@EnableJpaRepositories("ru.alishev.springcourse.repositories")
 public class SpringConfig implements WebMvcConfigurer {
 
     private final ApplicationContext applicationContext;
+    private final Environment environment;
 
     @Autowired
-    public SpringConfig(ApplicationContext applicationContext) {
+    public SpringConfig(ApplicationContext applicationContext, Environment environment) {
         this.applicationContext = applicationContext;
+        this.environment = environment;
     }
 
     @Bean
@@ -63,9 +77,9 @@ public class SpringConfig implements WebMvcConfigurer {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
 
         dataSource.setDriverClassName("org.postgresql.Driver");
-        dataSource.setUrl("jdbc:postgresql://localhost:5432/first_db");
+        dataSource.setUrl("jdbc:postgresql://localhost:5432/postgres");
         dataSource.setUsername("postgres");
-        dataSource.setPassword("postgres");
+        dataSource.setPassword("wkiscool");
 
         return dataSource;
     }
@@ -73,5 +87,30 @@ public class SpringConfig implements WebMvcConfigurer {
     @Bean
     public JdbcTemplate jdbcTemplate() {
         return new JdbcTemplate(dataSource());
+    }
+
+    @Bean
+    public Properties hibernateProperties(){
+        Properties properties = new Properties();
+        properties.put("hibernate.dialect", environment.getProperty("hibernate.dialect"));
+        properties.put("hibernate.show_sql", environment.getProperty("hibernate.show_sql"));
+        return properties;
+    }
+    @Bean
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(){
+        final LocalContainerEntityManagerFactoryBean entityManager = new LocalContainerEntityManagerFactoryBean();
+        entityManager.setDataSource(dataSource());
+        entityManager.setPackagesToScan("ru.alishev.springcourse.models");
+
+        final HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        entityManager.setJpaVendorAdapter(vendorAdapter);
+        entityManager.setJpaProperties(hibernateProperties());
+        return entityManager;
+    }
+    @Bean
+    public PlatformTransactionManager transactionManager(){
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
+        return transactionManager;
     }
 }

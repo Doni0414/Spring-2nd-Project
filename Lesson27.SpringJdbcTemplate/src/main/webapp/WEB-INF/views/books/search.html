@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Book</title>
+</head>
+<body>
+  <form action="">
+      <label for="search-input">Enter a title to search!</label>
+      <input type="text" name="title" id="search-input">
+      <br>
+      <input type="submit" value="Find!">
+  </form>
+  <div th:if="${#lists.isEmpty(books)}">No books found!</div>
+  <div th:unless="${#lists.isEmpty(books)}" th:each="book : ${books}">
+      <a th:href="@{/books/{id}(id=${book.getId()})}" th:text="${book.getTitle() + ', ' + book.getAuthor() + ', ' + book.getDate()}"></a>
+      <p th:if="${book.owner != null}" th:text="${'Currently at: ' + book.owner.getFio()}"></p>
+      <p th:if="${book.owner == null}">This book is currently free</p>
+  </div>
+</body>
+</html>
